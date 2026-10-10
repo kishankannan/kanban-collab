@@ -2,6 +2,37 @@
 
 import { useState, useTransition } from "react";
 import { updateCard, deleteCard } from "@/actions/card";
+import { Priority } from "@prisma/client";
+
+export const PRIORITY_STYLES: Record<
+  Priority,
+  { label: string; bg: string; text: string; border: string }
+> = {
+  LOW: {
+    label: "Low",
+    bg: "bg-slate-100 dark:bg-slate-800",
+    text: "text-slate-600 dark:text-slate-300",
+    border: "border-slate-200 dark:border-slate-700",
+  },
+  MEDIUM: {
+    label: "Medium",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-200 dark:border-blue-800",
+  },
+  HIGH: {
+    label: "High",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-200 dark:border-amber-800",
+  },
+  URGENT: {
+    label: "Urgent",
+    bg: "bg-rose-50 dark:bg-rose-950/40",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-rose-200 dark:border-rose-800",
+  },
+};
 
 interface CardModalProps {
   card: {
@@ -9,6 +40,7 @@ interface CardModalProps {
     title: string;
     description: string | null;
     order: number;
+    priority?: Priority; // 1. Added optional priority to interface
   };
   boardId: string;
   columnTitle: string;
@@ -24,6 +56,9 @@ export default function CardModal({
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [isPending, startTransition] = useTransition();
+  const [priority, setPriority] = useState<Priority>(
+    card.priority || Priority.MEDIUM
+  );
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +70,7 @@ export default function CardModal({
         boardId,
         title,
         description,
+        priority,
       });
       onClose();
     });
@@ -91,6 +127,24 @@ export default function CardModal({
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-sm bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
+          </div>
+
+          {/* 2. Priority Selection Dropdown */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Priority
+            </label>
+            <select
+              value={priority}
+              disabled={isPending}
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              className="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value={Priority.LOW}>Low</option>
+              <option value={Priority.MEDIUM}>Medium</option>
+              <option value={Priority.HIGH}>High</option>
+              <option value={Priority.URGENT}>Urgent</option>
+            </select>
           </div>
 
           <div>
