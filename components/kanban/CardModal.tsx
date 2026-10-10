@@ -10,27 +10,27 @@ export const PRIORITY_STYLES: Record<
 > = {
   LOW: {
     label: "Low",
-    bg: "bg-slate-100 dark:bg-slate-800",
-    text: "text-slate-600 dark:text-slate-300",
-    border: "border-slate-200 dark:border-slate-700",
+    bg: "bg-emerald-950/80",
+    text: "text-emerald-400 font-semibold",
+    border: "border-emerald-500/40",
   },
   MEDIUM: {
     label: "Medium",
-    bg: "bg-blue-50 dark:bg-blue-950/40",
-    text: "text-blue-600 dark:text-blue-400",
-    border: "border-blue-200 dark:border-blue-800",
+    bg: "bg-blue-950/80",
+    text: "text-blue-400 font-semibold",
+    border: "border-blue-500/40",
   },
   HIGH: {
     label: "High",
-    bg: "bg-amber-50 dark:bg-amber-950/40",
-    text: "text-amber-600 dark:text-amber-400",
-    border: "border-amber-200 dark:border-amber-800",
+    bg: "bg-amber-950/80",
+    text: "text-amber-400 font-semibold",
+    border: "border-amber-500/40",
   },
   URGENT: {
     label: "Urgent",
-    bg: "bg-rose-50 dark:bg-rose-950/40",
-    text: "text-rose-600 dark:text-rose-400",
-    border: "border-rose-200 dark:border-rose-800",
+    bg: "bg-rose-950/80",
+    text: "text-rose-400 font-semibold",
+    border: "border-rose-500/50",
   },
 };
 
