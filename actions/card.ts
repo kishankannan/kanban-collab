@@ -203,3 +203,27 @@ export async function deleteCard({
 
   revalidatePath(`/boards/${boardId}`);
 }
+
+export async function rebalanceColumnCards(columnId: string, boardId: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+
+  // Fetch all cards in the column sorted by their current order
+  const cards = await prisma.card.findMany({
+    where: { columnId },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  });
+
+  // Re-space them using increments of 1000 (1000, 2000, 3000, ...)
+  await prisma.$transaction(
+    cards.map((card, index) =>
+      prisma.card.update({
+        where: { id: card.id },
+        data: { order: (index + 1) * 1000 },
+      })
+    )
+  );
+
+  revalidatePath(`/boards/${boardId}`);
+}

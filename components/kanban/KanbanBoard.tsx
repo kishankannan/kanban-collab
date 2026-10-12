@@ -10,7 +10,7 @@ import {
 import AddCardForm from "./AddCardForm";
 import AddColumnForm from "./AddColumnForm";
 import ColumnActions from "./ColumnActions";
-import { moveCard } from "@/actions/card";
+import { moveCard, rebalanceColumnCards } from "@/actions/card";
 import { moveColumn } from "@/actions/column";
 import CardModal, { PRIORITY_STYLES } from "./CardModal";
 import { Priority } from "@prisma/client";
@@ -137,16 +137,28 @@ export default function KanbanBoard({
     nextDestCards.splice(destination.index, 0, movedCard);
 
     let calculatedOrder: number;
+    // >>>>> 1. ADD: Flag to track if precision gap is collapsing <<<<<
+    let needsRebalance = false;
+
     if (nextDestCards.length === 1) {
       calculatedOrder = 1000;
     } else if (destination.index === 0) {
       calculatedOrder = nextDestCards[1].order / 2;
+      // >>>>> 2. ADD: If inserting near 0, check if we ran out of space <<<<<
+      if (calculatedOrder < 0.001) {
+        needsRebalance = true;
+      }
     } else if (destination.index === nextDestCards.length - 1) {
       calculatedOrder = nextDestCards[destination.index - 1].order + 1000;
     } else {
       const prevOrder = nextDestCards[destination.index - 1].order;
       const nextOrder = nextDestCards[destination.index + 1].order;
       calculatedOrder = (prevOrder + nextOrder) / 2;
+
+      // >>>>> 3. ADD: If gap between neighboring cards is smaller than 0.001 <<<<<
+      if (Math.abs(nextOrder - prevOrder) < 0.001) {
+        needsRebalance = true;
+      }
     }
 
     movedCard.order = calculatedOrder;
@@ -159,6 +171,11 @@ export default function KanbanBoard({
         newOrder: calculatedOrder,
         boardId,
       });
+
+      // >>>>> 4. ADD: Self-healing rebalance call if threshold was hit <<<<<
+      if (needsRebalance) {
+        await rebalanceColumnCards(destination.droppableId, boardId);
+      }
     });
   };
 
