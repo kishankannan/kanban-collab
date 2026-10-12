@@ -23,6 +23,8 @@ export async function createCard(formData: FormData) {
     ? (priorityRaw as Priority)
     : Priority.MEDIUM;
   // ------------------------------------------
+  const dueDateRaw = formData.get("dueDate") as string;
+  const dueDate = dueDateRaw ? new Date(dueDateRaw) : null;
 
   if (!columnId || !boardId || !title) {
     throw new Error("Missing required fields");
@@ -57,6 +59,7 @@ export async function createCard(formData: FormData) {
         columnId,
         order: nextOrder,
         priority,
+        dueDate,
       },
     });
 
@@ -118,12 +121,14 @@ export async function updateCard({
   title,
   description,
   priority, // 1. Destructure priority
+  dueDate, // 2. Destructure dueDate
 }: {
   cardId: string;
   boardId: string;
   title: string;
   description?: string | null;
   priority?: Priority; // 2. Add optional TypeScript type
+  dueDate?: Date | null; // 3. Add optional Date or null
 }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) throw new Error("Unauthorized");
@@ -144,6 +149,7 @@ export async function updateCard({
         title: title.trim(),
         description: description?.trim() || null,
         ...(priority !== undefined ? { priority } : {}), // 3. Update priority if provided
+        ...(dueDate !== undefined ? { dueDate } : {}), // 4. Update dueDate if provided
       },
     });
 
