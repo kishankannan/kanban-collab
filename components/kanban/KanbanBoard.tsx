@@ -21,6 +21,7 @@ interface CardItem {
   description: string | null;
   order: number;
   priority?: Priority; // 1. Added optional Priority property
+  dueDate?: Date | string | null;
 }
 
 interface ColumnItem {
@@ -33,6 +34,42 @@ interface ColumnItem {
 interface KanbanBoardProps {
   boardId: string;
   initialColumns: ColumnItem[];
+}
+
+function getDueDateStatus(dueDate: Date | string | null | undefined) {
+  if (!dueDate) return null;
+
+  const target = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const targetDate = new Date(target);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  const formattedDate = target.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  if (diffDays < 0) {
+    return {
+      label: `${formattedDate} (Overdue)`,
+      style: "bg-rose-950/80 text-rose-400 border-rose-500/50 font-semibold",
+    };
+  } else if (diffDays === 0) {
+    return {
+      label: "Today",
+      style: "bg-amber-950/80 text-amber-400 border-amber-500/50 font-semibold",
+    };
+  } else {
+    return {
+      label: formattedDate,
+      style: "bg-slate-800/80 text-slate-300 border-slate-700 font-medium",
+    };
+  }
 }
 
 export default function KanbanBoard({
@@ -317,22 +354,35 @@ export default function KanbanBoard({
                                       : "hover:border-slate-500"
                                   }`}
                                 >
-                                  {/* 2. Priority Badge Pill */}
-                                  {card.priority && (
-                                    <div className="flex items-center mb-1">
-                                      <span
-                                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${
-                                          PRIORITY_STYLES[card.priority]?.bg ?? "bg-slate-800"
-                                        } ${
-                                          PRIORITY_STYLES[card.priority]?.text ?? "text-slate-300"
-                                        } ${
-                                          PRIORITY_STYLES[card.priority]?.border ?? "border-slate-700"
-                                        }`}
-                                      >
-                                        {PRIORITY_STYLES[card.priority]?.label ?? card.priority}
-                                      </span>
-                                    </div>
-                                  )}
+                                  {/* Replace the single priority badge block with this row */}
+                                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                   {card.priority && (
+                                    <span
+                                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                                      PRIORITY_STYLES[card.priority]?.bg ?? "bg-slate-800"
+                                    } ${
+                                      PRIORITY_STYLES[card.priority]?.text ?? "text-slate-300"
+                                    } ${
+                                      PRIORITY_STYLES[card.priority]?.border ?? "border-slate-700"
+                                   }`}
+                                  >
+                                   {PRIORITY_STYLES[card.priority]?.label ?? card.priority}
+                                 </span>
+                                )}
+
+                                {card.dueDate && (() => {
+                                 const status = getDueDateStatus(card.dueDate);
+                                 if (!status) return null;
+                                 return (
+                                    <span
+                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] border ${status.style}`}
+                                    >
+                                      <span>📅</span>
+                                      <span>{status.label}</span>
+                                    </span>
+                                  );
+                                })()}
+                              </div>
 
                                   <p className="text-sm font-medium text-slate-100">
                                     {card.title}
