@@ -41,6 +41,7 @@ interface CardModalProps {
     description: string | null;
     order: number;
     priority?: Priority; // 1. Added optional priority to interface
+    dueDate?: Date | string | null; // 2. Added optional dueDate to interface
   };
   boardId: string;
   columnTitle: string;
@@ -59,6 +60,12 @@ export default function CardModal({
   const [priority, setPriority] = useState<Priority>(
     card.priority || Priority.MEDIUM
   );
+  // Converts Date or ISO string into "YYYY-MM-DD" for <input type="date" />
+  const initialDateString = card.dueDate
+    ? new Date(card.dueDate).toISOString().split("T")[0]
+    : "";
+
+  const [dueDateString, setDueDateString] = useState(initialDateString);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +78,7 @@ export default function CardModal({
         title,
         description,
         priority,
+        dueDate: dueDateString ? new Date(dueDateString) : null, // <-- Pass parsed date or null
       });
       onClose();
     });
@@ -145,6 +153,30 @@ export default function CardModal({
               <option value={Priority.HIGH}>High</option>
               <option value={Priority.URGENT}>Urgent</option>
             </select>
+          </div>
+          {/* Due Date Picker Field */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">
+                Due Date
+              </label>
+              {dueDateString && (
+                <button
+                  type="button"
+                  onClick={() => setDueDateString("")}
+                  className="text-[11px] text-slate-500 hover:text-rose-400 transition-colors"
+                >
+                  Clear date
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              disabled={isPending}
+              value={dueDateString}
+              onChange={(e) => setDueDateString(e.target.value)}
+              className="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
+            />
           </div>
 
           <div>
