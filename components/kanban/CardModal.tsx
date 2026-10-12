@@ -2,6 +2,37 @@
 
 import { useState, useTransition } from "react";
 import { updateCard, deleteCard } from "@/actions/card";
+import { Priority } from "@prisma/client";
+
+export const PRIORITY_STYLES: Record<
+  Priority,
+  { label: string; bg: string; text: string; border: string }
+> = {
+  LOW: {
+    label: "Low",
+    bg: "bg-emerald-950/80",
+    text: "text-emerald-400 font-semibold",
+    border: "border-emerald-500/40",
+  },
+  MEDIUM: {
+    label: "Medium",
+    bg: "bg-blue-950/80",
+    text: "text-blue-400 font-semibold",
+    border: "border-blue-500/40",
+  },
+  HIGH: {
+    label: "High",
+    bg: "bg-amber-950/80",
+    text: "text-amber-400 font-semibold",
+    border: "border-amber-500/40",
+  },
+  URGENT: {
+    label: "Urgent",
+    bg: "bg-rose-950/80",
+    text: "text-rose-400 font-semibold",
+    border: "border-rose-500/50",
+  },
+};
 
 interface CardModalProps {
   card: {
@@ -9,6 +40,8 @@ interface CardModalProps {
     title: string;
     description: string | null;
     order: number;
+    priority?: Priority; // 1. Added optional priority to interface
+    dueDate?: Date | string | null; // 2. Added optional dueDate to interface
   };
   boardId: string;
   columnTitle: string;
@@ -24,6 +57,15 @@ export default function CardModal({
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [isPending, startTransition] = useTransition();
+  const [priority, setPriority] = useState<Priority>(
+    card.priority || Priority.MEDIUM
+  );
+  // Converts Date or ISO string into "YYYY-MM-DD" for <input type="date" />
+  const initialDateString = card.dueDate
+    ? new Date(card.dueDate).toISOString().split("T")[0]
+    : "";
+
+  const [dueDateString, setDueDateString] = useState(initialDateString);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +77,8 @@ export default function CardModal({
         boardId,
         title,
         description,
+        priority,
+        dueDate: dueDateString ? new Date(dueDateString) : null, // <-- Pass parsed date or null
       });
       onClose();
     });
@@ -90,6 +134,48 @@ export default function CardModal({
               disabled={isPending}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-sm bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          {/* 2. Priority Selection Dropdown */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Priority
+            </label>
+            <select
+              value={priority}
+              disabled={isPending}
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              className="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value={Priority.LOW}>Low</option>
+              <option value={Priority.MEDIUM}>Medium</option>
+              <option value={Priority.HIGH}>High</option>
+              <option value={Priority.URGENT}>Urgent</option>
+            </select>
+          </div>
+          {/* Due Date Picker Field */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-300">
+                Due Date
+              </label>
+              {dueDateString && (
+                <button
+                  type="button"
+                  onClick={() => setDueDateString("")}
+                  className="text-[11px] text-slate-500 hover:text-rose-400 transition-colors"
+                >
+                  Clear date
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              disabled={isPending}
+              value={dueDateString}
+              onChange={(e) => setDueDateString(e.target.value)}
+              className="w-full text-xs bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
             />
           </div>
 

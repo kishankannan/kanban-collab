@@ -122,6 +122,7 @@ model Card {
   title       String
   description String?   @db.Text
   order       Float     // Fractional order for O(1) drag-and-drop
+  priority    Priority  @default(MEDIUM)
   dueDate     DateTime? @map("due_date")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -149,4 +150,11 @@ model ActivityLog {
 
   @@index([boardId, createdAt(sort: Desc)])
   @@map("activity_logs")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }

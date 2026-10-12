@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { Priority } from "@prisma/client";
 
 export async function createCard(formData: FormData) {
   // 1. Authenticate session
@@ -15,6 +16,15 @@ export async function createCard(formData: FormData) {
   const boardId = formData.get("boardId") as string;
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
+
+  // --- NEW: Extract and validate priority ---
+  const priorityRaw = formData.get("priority") as string;
+  const priority = Object.values(Priority).includes(priorityRaw as Priority)
+    ? (priorityRaw as Priority)
+    : Priority.MEDIUM;
+  // ------------------------------------------
+  const dueDateRaw = formData.get("dueDate") as string;
+  const dueDate = dueDateRaw ? new Date(dueDateRaw) : null;
 
   if (!columnId || !boardId || !title) {
     throw new Error("Missing required fields");
@@ -48,6 +58,8 @@ export async function createCard(formData: FormData) {
         description,
         columnId,
         order: nextOrder,
+        priority,
+        dueDate,
       },
     });
 
@@ -108,11 +120,15 @@ export async function updateCard({
   boardId,
   title,
   description,
+  priority, // 1. Destructure priority
+  dueDate, // 2. Destructure dueDate
 }: {
   cardId: string;
   boardId: string;
   title: string;
   description?: string | null;
+  priority?: Priority; // 2. Add optional TypeScript type
+  dueDate?: Date | null; // 3. Add optional Date or null
 }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) throw new Error("Unauthorized");
@@ -132,6 +148,8 @@ export async function updateCard({
       data: {
         title: title.trim(),
         description: description?.trim() || null,
+        ...(priority !== undefined ? { priority } : {}), // 3. Update priority if provided
+        ...(dueDate !== undefined ? { dueDate } : {}), // 4. Update dueDate if provided
       },
     });
 
@@ -188,6 +206,30 @@ export async function deleteCard({
       });
     }
   });
+
+  revalidatePath(`/boards/${boardId}`);
+}
+
+export async function rebalanceColumnCards(columnId: string, boardId: string) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) throw new Error("Unauthorized");
+
+  // Fetch all cards in the column sorted by their current order
+  const cards = await prisma.card.findMany({
+    where: { columnId },
+    orderBy: { order: "asc" },
+    select: { id: true },
+  });
+
+  // Re-space them using increments of 1000 (1000, 2000, 3000, ...)
+  await prisma.$transaction(
+    cards.map((card, index) =>
+      prisma.card.update({
+        where: { id: card.id },
+        data: { order: (index + 1) * 1000 },
+      })
+    )
+  );
 
   revalidatePath(`/boards/${boardId}`);
 }
