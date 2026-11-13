@@ -14,6 +14,7 @@ import { moveCard, rebalanceColumnCards } from "@/actions/card";
 import { moveColumn } from "@/actions/column";
 import CardModal, { PRIORITY_STYLES } from "./CardModal";
 import { Priority } from "@prisma/client";
+import ActivityDrawer from "./ActivityDrawer";
 
 interface CardItem {
   id: string;
@@ -76,6 +77,7 @@ export default function KanbanBoard({
   boardId,
   initialColumns,
 }: KanbanBoardProps) {
+  const [isActivityOpen, setIsActivityOpen] = useState(false);
   const [columns, setColumns] = useState<ColumnItem[]>(initialColumns);
   const [, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
@@ -254,6 +256,7 @@ export default function KanbanBoard({
           >
             All
           </button>
+
           {(Object.keys(PRIORITY_STYLES) as Priority[]).map((p) => {
             const isSelected = selectedPriority === p;
             return (
@@ -271,6 +274,18 @@ export default function KanbanBoard({
               </button>
             );
           })}
+
+          <div className="h-4 w-[1px] bg-slate-800 mx-1 hidden sm:block" />
+          <button
+            type="button"
+            onClick={() => setIsActivityOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition-colors"
+          >
+            <span>🕒</span>
+            <span>Activity</span>
+          </button>
+        
+
         </div>
       </div>
       {/* ------------------------------------------------------------------------ */}
@@ -425,7 +440,14 @@ export default function KanbanBoard({
           columnTitle={activeCardData.columnTitle}
           onClose={() => setActiveCardData(null)}
         />
-      )}
+        )}
+
+        <ActivityDrawer
+  boardId={boardId}
+  isOpen={isActivityOpen}
+  onClose={() => setIsActivityOpen(false)}
+  />
+      
     </DragDropContext>
   </div>
   );
